@@ -42,7 +42,7 @@ class Product(models.Model):
                             allow_unicode=True)  
     name = models.CharField(max_length=100, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
-    price = models.DecimalField(max_digits=10, decimal_places=2,blank=True, null=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2,default=0.00)
     category = models.ForeignKey(Category, related_name='products', on_delete=models.CASCADE,blank=True, null=True)
     date_created = models.DateTimeField(auto_now_add =True)
 

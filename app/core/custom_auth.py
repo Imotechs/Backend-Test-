@@ -10,7 +10,6 @@ permiting them to use their names or email  to login
 '''
 class EmailNameAuthBackend(ModelBackend):
     def authenticate(self,request,name =None, password = None):
-        print(name,'name...',password)
         try:
             user = User.objects.get(email=name)
             success = user.check_password(password)

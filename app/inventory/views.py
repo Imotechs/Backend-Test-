@@ -146,17 +146,16 @@ class CategoryView(APIView):
     def get(self, request, slug=None,*args,**kwargs):
         if slug:
             try:
-                product = self.model_class.objects.get(slug=slug)
-                serializer = self.serializer_class(product,many =False)
-                return Response(serializer.data)
+                category = self.model_class.objects.get(slug=slug)
+                serializer = self.serializer_class(category,many =False)
+                return Response(serializer.data,status=status.HTTP_200_OK)
             except self.model_class.DoesNotExist:
                 return Response({'error':'Object not found!'}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            products = self.model_class.objects.all()
-            serializer = self.serializer_class(products, many=True)
-            return Response(serializer.data)
+        categories = self.model_class.objects.all()
+        serializer = self.serializer_class(categories, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     def post(self, request,*args,**kwargs):
-        data = request.data
+        data = request.data.copy()
         serializer = self.serializer_class(data=data)
         if serializer.is_valid():
             serializer.save()
