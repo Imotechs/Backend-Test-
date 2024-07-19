@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,8 +27,9 @@ SECRET_KEY = 'django-insecure-h-h69cr05lmc*w4vtkf+5qltg8#&#xf8fe(v9j9oxs-*-^#vjd
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [   ]
 
+FRONTEND_URL ='http://localhost:8000'
 
 # Application definition
 
@@ -151,6 +153,7 @@ REST_FRAMEWORK = {
     ],
 }
 
+AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend','core.custom_auth.EmailNameAuthBackend']
 
 
 SIMPLE_JWT = {
@@ -179,3 +182,14 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_LIFETIME": timedelta(minutes=60),
     "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
+
+
+# EMAIL SENDING CONFIGURATION
+EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+DUMMY_EMAIL = 'liampeter127@gmail.com'
+DUMMY_PASS = 'jazgtjosrtnvnjfq'
+EMAIL_HOST_USER=config('EMAIL_HOST_USER',default =DUMMY_EMAIL)
+EMAIL_HOST_PASSWORD=config('EMAIL_HOST_PASSWORD',default = DUMMY_PASS)
