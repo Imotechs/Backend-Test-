@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 from pathlib import Path
 from datetime import timedelta
 from decouple import config
-
+import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -22,12 +22,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-h-h69cr05lmc*w4vtkf+5qltg8#&#xf8fe(v9j9oxs-*-^#vjd'
+SECRET_KEY = os.getenv('SECRET_KEY','')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG',True)
 
-ALLOWED_HOSTS = [   ]
+ALLOWED_HOSTS = [ ]
 
 FRONTEND_URL ='http://localhost:8000'
 
@@ -83,19 +83,19 @@ WSGI_APPLICATION = 'app.wsgi.application'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-
     # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': 'your_db_name',
-    #     'USER': 'your_db_user',
-    #     'PASSWORD': 'your_db_password',
-    #     'HOST': 'localhost',
-    #     'PORT': '5432',
+    #     'ENGINE': 'django.db.backends.sqlite3',
+    #     'NAME': BASE_DIR / 'db.sqlite3',
     # }
+
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'inventory_app',
+        'USER': os.getenv('POSTGRESUSER',''),
+        'PASSWORD': os.getenv('POSTGRESPASS',''),
+        'HOST': os.getenv('POSTGRESHOST',''),
+        'PORT': os.getenv('POSTGRESPORT','5432'),
+    }
 }
 
 
@@ -189,7 +189,6 @@ EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT=587
 EMAIL_USE_TLS=True
-DUMMY_EMAIL = 'liampeter127@gmail.com'
-DUMMY_PASS = 'jazgtjosrtnvnjfq'
-EMAIL_HOST_USER=config('EMAIL_HOST_USER',default =DUMMY_EMAIL)
-EMAIL_HOST_PASSWORD=config('EMAIL_HOST_PASSWORD',default = DUMMY_PASS)
+
+EMAIL_HOST_USER=config('HOST_USER',default ='')
+EMAIL_HOST_PASSWORD=config('HOST_PASS',default = '')

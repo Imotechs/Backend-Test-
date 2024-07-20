@@ -5,21 +5,18 @@ from .models import Category, Product,Order,OrderItem
 User = get_user_model()
 
 
-class SlugRelatedField(serializers.SlugRelatedField):
-    def to_internal_value(self, data):
-        try:
-            return self.get_queryset().get(slug=data)
-        except self.queryset.model.DoesNotExist:
-            raise serializers.ValidationError("Object with this slug does not exist.")
-
-    def to_representation(self, value):
-        return value
-    
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['email', 'name', 'password']
         extra_kwargs = {'password': {'write_only': True}}
+    def create(self, validated_data):
+        password = validated_data.pop('password', None)
+        instance = self.Meta.model(**validated_data)
+        if password is not None:
+            instance.set_password(password)
+        instance.save()
+        return instance
 
 
 class CategorySerializer(serializers.ModelSerializer):

@@ -9,15 +9,15 @@ This class is responsible for user login
 permiting them to use their names or email  to login
 '''
 class EmailNameAuthBackend(ModelBackend):
-    def authenticate(self,request,name =None, password = None):
+    def authenticate(self,requst,email =None, password = None):
         try:
-            user = User.objects.get(email=name)
+            user = User.objects.get(email=email)
             success = user.check_password(password)
             if success:
                 return user
         except User.DoesNotExist:
             try:
-                user = User.objects.get(name=name)
+                user = User.objects.get(name=email)
                 success = user.check_password(password)
                 if success:
                     return user

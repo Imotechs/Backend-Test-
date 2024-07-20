@@ -9,23 +9,30 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django.db import transaction
-
 from rest_framework.response import Response
-from .signals import send_verification_email
 from rest_framework.permissions import AllowAny
 from django.db.models import Q
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import api_view
+from django.utils.http import urlsafe_base64_decode
+from .tokens import account_activation_token
+from django.http import HttpResponse
+from django.contrib.auth import authenticate
+from django.contrib.auth import get_user_model
 
+
+#local imports
+from .signals import send_verification_email
 from .serializers import UserSerializer,ProductSerializer,\
     OrderItemSerializer,OrderSerializer,CategorySerializer,OrderHistorySerializer
 from .models import Category, Product,Order,OrderItem
 # Create your views here.
 
 
+User = get_user_model()
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
-    def get_token(cls, user):
+    def get_token(cls, user):# serialize a JWT token combining user name and email
         token = super().get_token(user)
         token["name"] = user.name
         token["email"] = user.email
@@ -35,21 +42,22 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 class CustomTokenObtain(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
     def post(self, request, *args, **kwargs):
-        data = request.data
-        email = data['email']or None
+        data = request.data #get the request data and retrieve email/name and password
+        name = data['email']or None
         password = data['password'] or None
-        user = EmailNameAuthBackend.authenticate(self,request,email, password)
-        if user is not None:
-            if user.is_email_verified:
+        user = authenticate(request, email=name , password=password)# try to authenticate with the info
+        if user is not None:# if user is authenticated and not none
+            user.save()
+            if user.is_email_verified:# if user verify his email
                 if user.is_active:
-                    refresh = RefreshToken.for_user(user)
+                    refresh = RefreshToken.for_user(user) #get a refresh token
                     token = {
                         'refresh': str(refresh),
                         'access': str(refresh.access_token),
                     }
-                    return Response(token, status=status.HTTP_200_OK)
+                    return Response(token, status=status.HTTP_200_OK)# respond with the access and refresh token
                 return Response({'error': 'Account disabled!'}, status=status.HTTP_401_UNAUTHORIZED)
-            else:
+            else:# else email is not verified resend him the verification email and throw him an error message
                 send_verification_email(user)
                 return Response({'error': 'Account not verified!,checkout we resend verification email'}, status=status.HTTP_401_UNAUTHORIZED)
         return Response({'error': 'Invalid login Details'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -68,7 +76,46 @@ class UserRegistrationView(generics.GenericAPIView):
             return Response(data,status=status.HTTP_200_OK)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
-
+class EmailVerificationView(generics.GenericAPIView):
+    serializer_class = UserSerializer
+    permission_classes =[]
+    authentication_classes=[]
+    def post(self, request):# handle verification via post data and not directly on our backend domain
+        data = request.data.copy()
+        uidb64 = data.get('uidb64','')
+        token = data.get("token", '')
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(id=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = None
+            return Response({"message": "User dose not exist."}, status=status.HTTP_404_NOT_FOUND)
+        if user is not None and account_activation_token.check_token(user,token):
+            user.is_email_verified = True
+            user.is_active = True
+            user.save()
+            message = {'message':'Verification completed!!'}
+            return Response(message,status=status.HTTP_200_OK)
+        message = {'message':'Verification link already used or has Expired!!'}
+        return Response(message,status=status.HTTP_400_BAD_REQUEST)
+    def get(self,request,*args,**kwargs):# handle verification on get directly on the backend domain
+        uidb64 = request.GET.get('uid', '')
+        token = request.GET.get('confirmation_token', '')
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(id=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = None
+            return Response({"message": "User dose not exist."}, status=status.HTTP_404_NOT_FOUND)
+        if user is not None and account_activation_token.check_token(user,token):
+            user.is_email_verified = True
+            user.is_active = True
+            user.save()
+            html_content = "<html><body><h1>Account Verified!!</h1></body></html>"
+            return HttpResponse(html_content,status=status.HTTP_200_OK)
+        html_content = "<html><body><h1>Verification link already used or has Expired!!</h1></body></html>"
+        return HttpResponse(html_content,status=status.HTTP_400_BAD_REQUEST)
+    
 
 class ProductView(APIView):#One View for all CRUD on Product model
     authentication_classes=[]
@@ -195,7 +242,7 @@ class OrderView(APIView):
                     quantity = item_data.get('quantity', 1)
                     OrderItem.objects.create(order=order, product=product, quantity=quantity)
                 except Product.DoesNotExist:
-                    transaction.set_rollback(True)
+                    transaction.set_rollback(True)# rollback actions on db
                     return Response({'error': f"Product with slug {item_data['slug']} not found"}, status=status.HTTP_400_BAD_REQUEST)
     
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -205,7 +252,7 @@ class OrderView(APIView):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
-def endpoints(request):
+def endpoints(request):# endpoint to keep all out endpoint at the root url for easy access and development
     data = [
     
     "api/v1/register/", 
