@@ -153,7 +153,7 @@ REST_FRAMEWORK = {
     ],
 }
 
-AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend','core.custom_auth.EmailNameAuthBackend']
+AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend','inventory.custom_auth.EmailNameAuthBackend']
 
 
 SIMPLE_JWT = {
