@@ -15,11 +15,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,include
-from inventory.views import endpoints,EmailVerificationView
+from inventory.views import endpoints
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('',endpoints),
-    path("verify-email/",EmailVerificationView.as_view(),name='email_verification'),
     path('api/v1/',include('inventory.urls')),
 ]

@@ -40,12 +40,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    #...
+    #...third party apps
     'rest_framework',
     'rest_framework_simplejwt',
-    #apps
+    # local apps
     'core',
-    'inventory'
+    'inventory',
 ]
 
 MIDDLEWARE = [
@@ -183,12 +183,3 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
 
-
-# EMAIL SENDING CONFIGURATION
-EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT=587
-EMAIL_USE_TLS=True
-
-EMAIL_HOST_USER=config('HOST_USER',default ='')
-EMAIL_HOST_PASSWORD=config('HOST_PASS',default = '')
